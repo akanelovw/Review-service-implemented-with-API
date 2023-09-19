@@ -207,13 +207,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class TagsViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminUser,)
+    permission_classes = (AllowAny,)
+    pagination_class = None
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminUser,)
+    permission_classes = (AllowAny,)
+    pagination_class = None
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (SearchFilter, DjangoFilterBackend)
