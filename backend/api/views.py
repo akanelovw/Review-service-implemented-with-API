@@ -4,11 +4,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (AllowAny, IsAuthenticated, IsAdminUser)
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
 from users.models import Follow
 from recipes.models import (Recipe, Tag, Ingredient,
                             Favorite, ShoppingCart, IngredientMeasure)
@@ -17,6 +19,7 @@ from .serializers import (FollowSerializer, PasswordSerializer,
                           UserSerializer, RecipeSerializer,
                           TagSerializer, IngredientSerializer,
                           FavoriteSerializer,)
+from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAnAuthor
 
 User = get_user_model()
@@ -116,6 +119,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     pagination_class = PageNumberPagination
     permission_classes = [IsAnAuthor]
+    filterset_class = RecipeFilter
+    filter_backends = [DjangoFilterBackend, ]
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -211,3 +216,6 @@ class IngredientViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    filter_backends = (SearchFilter, DjangoFilterBackend)
+    search_fields = ('^name',)
+    filterset_class = IngredientFilter

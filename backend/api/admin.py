@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from recipes.models import Tag, Ingredient, IngredientMeasure, Favorite, ShoppingCart
+from recipes.models import (Tag, Ingredient, IngredientMeasure,
+                            Favorite, ShoppingCart)
 from users.models import User, Follow
 
 admin.site.register(User)
