@@ -91,10 +91,7 @@ class PasswordSerializer(serializers.Serializer):
 
     def validate_current_password(self, current_password):
         user = self.context['request'].user
-        if not authenticate(
-                username=user.email,
-                password=current_password
-                ):
+        if not authenticate(username=user.email, password=current_password):
             raise serializers.ValidationError(
                 'Проверьте введенные данные',
                 code='authorization'
@@ -207,16 +204,17 @@ class RecipeSerializer(serializers.ModelSerializer):
             ingredient = get_object_or_404(
                 Ingredient,
                 id=ingredient_item['id']
-                )
+            )
             if ingredient in ingredient_array:
                 raise serializers.ValidationError(
-                    'Ингридиенты повторяются')
+                    'Ингридиенты повторяются'
+                )
             ingredient_array.append(ingredient)
             if int(ingredient_item['amount']) <= 0:
                 raise serializers.ValidationError({
                     'ingredients': (
                         'Масса ингридиента не может быть меньше нуля'
-                        )
+                    )
                 })
         data.update(
             {

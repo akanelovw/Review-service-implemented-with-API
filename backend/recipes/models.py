@@ -71,19 +71,19 @@ class Recipe(models.Model):
         'Дата публикации',
         auto_now_add=True,
         db_index=True
-        )
+    )
     text = models.TextField(
         verbose_name='Описание',
         max_length=1000
-        )
+    )
     name = models.CharField(
         verbose_name='Название',
         max_length=200,
-        )
+    )
     image = models.ImageField(
         verbose_name='Изображение',
         upload_to='media/'
-        )
+    )
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время готовки',
         default=1,
