@@ -1,9 +1,10 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -14,10 +15,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='token')
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv(
-    'ALLOWED_HOST',
-    default='127.0.0.1, localhost'
-).split(', ')
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '51.250.25.226', 'foodgramproject.zapto.org']
 
 AUTH_USER_MODEL = 'users.User'
 

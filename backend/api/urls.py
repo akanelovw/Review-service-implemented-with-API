@@ -1,9 +1,8 @@
+from api.views import (IngredientViewSet, RecipeViewSet, SubscriptionsApiView,
+                       TagsViewSet, UsersViewSet, set_password, subscribe)
 from django.urls import include, path
 from djoser.views import TokenCreateView, TokenDestroyView
 from rest_framework.routers import DefaultRouter
-
-from api.views import (UsersViewSet, set_password, subscribe,
-                       SubscriptionsApiView, RecipeViewSet, TagsViewSet, IngredientViewSet)
 
 app_name = 'api'
 

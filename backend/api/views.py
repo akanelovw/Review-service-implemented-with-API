@@ -1,28 +1,26 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Sum
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from recipes.models import (Favorite, Ingredient, IngredientMeasure, Recipe,
+                            ShoppingCart, Tag)
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import (AllowAny, IsAuthenticated, IsAdminUser)
-from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from users.models import Follow
-from recipes.models import (Recipe, Tag, Ingredient,
-                            Favorite, ShoppingCart, IngredientMeasure)
 
-from .serializers import (FollowSerializer, PasswordSerializer,
-                          UserSerializer, RecipeSerializer,
-                          TagSerializer, IngredientSerializer,
-                          FavoriteSerializer,)
-from .filters import IngredientFilter, RecipeFilter
-from .permissions import IsAnAuthor
-from .pagination import LimitPaginator
 from .enums import Enums, Urls
+from .filters import IngredientFilter, RecipeFilter
+from .pagination import LimitPaginator
+from .serializers import (FavoriteSerializer, FollowSerializer,
+                          IngredientSerializer, PasswordSerializer,
+                          RecipeSerializer, TagSerializer, UserSerializer)
 
 User = get_user_model()
 

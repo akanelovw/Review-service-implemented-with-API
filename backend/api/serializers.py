@@ -1,17 +1,13 @@
-from django.shortcuts import get_object_or_404
 import django.contrib.auth.password_validation as validators
-from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import make_password
-from rest_framework import serializers
+from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
+from recipes.models import (Favorite, Ingredient, IngredientMeasure, Recipe,
+                            ShoppingCart, Tag)
+from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 from users.models import Follow
-from recipes.models import (Recipe, Tag, Ingredient,
-                            IngredientMeasure, ShoppingCart, Favorite)
-from django.http import HttpResponse
-from rest_framework.response import Response
-from rest_framework import status
-
 
 User = get_user_model()
 
@@ -197,9 +193,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        image_arr = self.initial_data.get('image')
-        if not image_arr:
-            raise serializers.ValidationError("Нет фотографии")
         tags_arr = self.initial_data.get('tags')
         if not tags_arr:
             raise serializers.ValidationError("Не указаны тэги")
@@ -227,7 +220,6 @@ class RecipeSerializer(serializers.ModelSerializer):
                 })
         data.update(
             {
-                "image": image_arr,
                 "tags": tags_arr,
                 "ingredients": ingredients,
                 "author": self.context.get("request").user,
@@ -244,10 +236,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
 
     def create(self, validated_data):
-        image = validated_data.pop('image')
         tags_data = validated_data.pop('tags')
         ingredients_data = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(image=image, **validated_data)
+        recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags_data)
         self.create_ingredients(ingredients_data, recipe)
         return recipe
