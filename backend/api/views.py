@@ -189,10 +189,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
     @action(
-            detail=True,
-            methods=['POST', 'DELETE'],
-            permission_classes=[IsAuthenticated],
-            pagination_class=None
+        detail=True,
+        methods=['POST', 'DELETE'],
+        permission_classes=[IsAuthenticated],
+        pagination_class=None
     )
     def favorite(self, request, pk=None):
         if request.method == 'POST':
@@ -202,10 +202,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return None
 
     @action(
-            detail=True,
-            methods=['POST', 'DELETE'],
-            permission_classes=[IsAuthenticated],
-            pagination_class=None
+        detail=True,
+        methods=['POST', 'DELETE'],
+        permission_classes=[IsAuthenticated],
+        pagination_class=None
     )
     def shopping_cart(self, request, pk=None):
         if request.method == 'POST':
@@ -215,9 +215,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return None
 
     @action(
-            detail=False,
-            methods=['GET'],
-            permission_classes=(IsAuthenticated,)
+        detail=False,
+        methods=['GET'],
+        permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request, **kwargs):
         user = request.user

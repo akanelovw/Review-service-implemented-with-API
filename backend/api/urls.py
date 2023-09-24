@@ -16,21 +16,24 @@ urlpatterns = [
      path(
          'users/<int:pk>/subscribe/',
          subscribe,
-         name='subscribe'),
+         name='subscribe'
+     ),
      path(
           'auth/token/login/',
           TokenCreateView.as_view(),
-          name='login'),
+          name='login'
+     ),
      path(
           'auth/token/logout/',
           TokenDestroyView.as_view(),
-          name='logout'),
+          name='logout'
+     ),
      path(
           'users/set_password/',
           set_password,
-          name='set_password'),
+          name='set_password'
+     ),
      path('users/subscriptions/', SubscriptionsApiView.as_view()),
-
      path('', include(router.urls)),
      path('', include('djoser.urls')),
      path('auth/', include('djoser.urls.authtoken')),
