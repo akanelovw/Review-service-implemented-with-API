@@ -13,10 +13,14 @@ router.register('tags', TagsViewSet)
 router.register('ingredients', IngredientViewSet)
 
 urlpatterns = [
+     path('users/subscriptions/', SubscriptionsApiView.as_view()),
+     path('', include(router.urls)),
+     path('', include('djoser.urls')),
+     path('auth/', include('djoser.urls.authtoken')),
      path(
-         'users/<int:pk>/subscribe/',
-         subscribe,
-         name='subscribe'
+          'users/<int:pk>/subscribe/',
+          subscribe,
+          name='subscribe'
      ),
      path(
           'auth/token/login/',
@@ -33,8 +37,4 @@ urlpatterns = [
           set_password,
           name='set_password'
      ),
-     path('users/subscriptions/', SubscriptionsApiView.as_view()),
-     path('', include(router.urls)),
-     path('', include('djoser.urls')),
-     path('auth/', include('djoser.urls.authtoken')),
 ]
