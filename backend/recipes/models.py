@@ -1,24 +1,35 @@
-from django.core.validators import MinValueValidator
+from django.core import validators
 from django.db import models
 from users.models import User
+
+CHAR_FIELD_MAX_LENGTH = 200
+RECIPE_TEXT_MAX_LENGTH = 1000
+COLOR_FIELD_MAX_LENGTH = 8
+MIN_VALUE = 1
 
 
 class Tag(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=250,
+        max_length=CHAR_FIELD_MAX_LENGTH,
         unique=True,
     )
     color = models.CharField(
         verbose_name='HEX цвет',
-        max_length=32,
+        max_length=COLOR_FIELD_MAX_LENGTH,
         unique=True,
         default='#CD5C5C',
+        validators=[
+            validators.RegexValidator(
+                '^#(?:[0-9a-fA-F]{3}){1,2}$',
+                'Неверный формат цвета'
+            )
+        ]
     )
     slug = models.SlugField(
         verbose_name='Slug',
-        max_length=250,
+        max_length=CHAR_FIELD_MAX_LENGTH,
         unique=True,
     )
 
@@ -34,17 +45,23 @@ class Tag(models.Model):
 class Ingredient(models.Model):
     name = models.CharField(
         'Название',
-        max_length=200
+        max_length=CHAR_FIELD_MAX_LENGTH
     )
     measurement_unit = models.CharField(
         'Единица измерения',
-        max_length=200
+        max_length=CHAR_FIELD_MAX_LENGTH
     )
 
     class Meta:
         ordering = ['name']
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_name_measurement_unit'
+            )
+        ]
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}.'
@@ -74,11 +91,11 @@ class Recipe(models.Model):
     )
     text = models.TextField(
         verbose_name='Описание',
-        max_length=1000
+        max_length=RECIPE_TEXT_MAX_LENGTH
     )
     name = models.CharField(
         verbose_name='Название',
-        max_length=200,
+        max_length=CHAR_FIELD_MAX_LENGTH,
     )
     image = models.ImageField(
         verbose_name='Изображение',
@@ -86,8 +103,8 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время готовки',
-        default=1,
-        validators=[MinValueValidator(1, 'Минимум одна минута')],
+        default=MIN_VALUE,
+        validators=[validators.MinValueValidator(MIN_VALUE, 'Минимум одна минута')],
     )
 
     class Meta:
@@ -116,8 +133,8 @@ class IngredientMeasure(models.Model):
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
         validators=(
-            MinValueValidator(
-                1, message='Ингридиентов не может быть меньше одного'
+            validators.MinValueValidator(
+                MIN_VALUE, message='Ингридиентов не может быть меньше одного'
             ),
         )
     )
