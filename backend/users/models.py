@@ -50,7 +50,7 @@ class Follow(models.Model):
         ]
 
     def clean(self):
-        if self.user == self.user:
+        if self.user == self.author:
             raise validators.ValidationError(
                 {'error': ('Подписаться на себя нельзя')}
             )

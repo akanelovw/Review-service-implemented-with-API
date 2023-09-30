@@ -14,90 +14,58 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from users.models import Follow
+from djoser.views import UserViewSet
 
 from .enums import Enums, Urls
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import LimitPaginator
 from .serializers import (FavoriteSerializer, FollowSerializer,
-                          IngredientSerializer, PasswordSerializer,
-                          RecipeSerializer, TagSerializer, UserSerializer)
+                          IngredientSerializer, RecipeSerializer,
+                          TagSerializer, UserSerializer, SubscribeSerializer)
 
 User = get_user_model()
 
 
-class UsersViewSet(viewsets.ModelViewSet):
+class UsersViewSet(UserViewSet):
 
     pagination_class = PageNumberPagination
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AllowAny, ]
-
-    def get_queryset(self):
-        queryset = super(UsersViewSet, self).get_queryset()
-        return queryset
 
     @action(
-        detail=False,
-        methods=['GET'],
-        permission_classes=(IsAuthenticated, )
+            detail=True,
+            methods=['POST', 'DELETE'],
+            serializer_class=SubscribeSerializer,
+            permission_classes=[IsAuthenticated]
     )
-    def me(self, request):
-        serializer = self.get_serializer(self.request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def subscribe(self, request, id):
+        user = self.request.user
+        author = get_object_or_404(User, pk=id)
 
-
-@api_view(['POST'])
-def set_password(request):
-    serializer = PasswordSerializer(
-        data=request.data,
-        context={'request': request})
-    if serializer.is_valid():
-        serializer.save()
-        return Response(
-            {'message': 'Пароль изменён'},
-            status=status.HTTP_204_NO_CONTENT)
-    return Response(
-        {'error': 'Введите верные данные'},
-        status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(['POST', 'DELETE'])
-@permission_classes([IsAuthenticated, ])
-def subscribe(request, pk):
-    user = get_object_or_404(User, username=request.user.username)
-    author = get_object_or_404(User, pk=pk)
-
-    if request.method == 'POST':
-        if user.id == author.id:
-            content = {'errors': 'Нельзя подписаться на себя'}
-            return Response(
-                content,
-                status=status.HTTP_400_BAD_REQUEST
+        if request.method == 'POST':
+            data = {
+                'user': user.id,
+                'author': author.id
+            }
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            serializer = FollowSerializer(
+                author, context={'request': request}
             )
-        try:
-            Follow.objects.create(user=user, author=author)
-        except IntegrityError:
-            content = {'errors': 'Вы уже подписаны'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        follows = User.objects.all().filter(id=pk)
-        serializer = FollowSerializer(
-            follows,
-            context={'request': request},
-            many=True,
-        )
-        return Response(*serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    if request.method == 'DELETE':
-        try:
-            subscription = Follow.objects.get(user=user, author=author)
-        except ObjectDoesNotExist:
-            content = {'errors': 'Вы не подписаны'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        subscription.delete()
-        return HttpResponse(
-            'Успешная отписка',
-            status=status.HTTP_204_NO_CONTENT
-        )
+        if request.method == 'DELETE':
+            try:
+                subscription = Follow.objects.get(user=user, author=author)
+            except ObjectDoesNotExist:
+                content = {'errors': 'Вы не подписаны'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            subscription.delete()
+            return HttpResponse(
+                'Успешная отписка',
+                status=status.HTTP_204_NO_CONTENT
+            )
 
 
 class SubscriptionsApiView(generics.ListAPIView):

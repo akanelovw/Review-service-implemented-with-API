@@ -85,32 +85,6 @@ class UserSerializer(serializers.ModelSerializer):
                                      author=obj).exists()
 
 
-class PasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField()
-    current_password = serializers.CharField()
-
-    def validate_current_password(self, current_password):
-        user = self.context['request'].user
-        if not authenticate(username=user.email, password=current_password):
-            raise serializers.ValidationError(
-                'Проверьте введенные данные',
-                code='authorization'
-            )
-        return current_password
-
-    def validate_new_password(self, new_password):
-        validators.validate_password(new_password)
-        return new_password
-
-    def create(self, validated_data):
-        user = self.context['request'].user
-        password = make_password(
-            validated_data.get('new_password'))
-        user.password = password
-        user.save()
-        return validated_data
-
-
 class FollowSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField(read_only=True)
     recipes = serializers.SerializerMethodField()
@@ -145,6 +119,23 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = [
+            'user',
+            'author',
+        ]
+
+    def validate_author(self, value):
+        request = self.context['request']
+        if not request.user == value:
+            return value
+        raise serializers.ValidationError(
+            ('Вы не можете подписаться на себя')
+        )
 
 
 class RecipeSerializer(serializers.ModelSerializer):
