@@ -1,5 +1,6 @@
 from django.core import validators
 from django.db import models
+
 from users.models import User
 
 CHAR_FIELD_MAX_LENGTH = 200
@@ -104,7 +105,8 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время готовки',
         default=MIN_VALUE,
-        validators=[validators.MinValueValidator(MIN_VALUE, 'Минимум одна минута')],
+        validators=[validators.MinValueValidator(
+            MIN_VALUE, 'Минимум одна минута')],
     )
 
     class Meta:

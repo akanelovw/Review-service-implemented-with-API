@@ -1,27 +1,26 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import IntegrityError
-from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import (Favorite, Ingredient, IngredientMeasure, Recipe,
-                            ShoppingCart, Tag)
+from djoser.views import UserViewSet
 from rest_framework import generics, status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from users.models import Follow
-from djoser.views import UserViewSet
-from .utils import create_cart
 
+from recipes.models import (Favorite, Ingredient, Recipe,
+                            ShoppingCart, Tag)
+from users.models import Follow
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import LimitPaginator
 from .serializers import (FavoriteSerializer, FollowSerializer,
-                          IngredientSerializer, RecipeSerializer,
-                          TagSerializer, UserSerializer, SubscribeSerializer)
+                          IngredientSerializer, RecipeListSerializer,
+                          RecipeSerializer, SubscribeSerializer, TagSerializer,
+                          UserSerializer)
+from .utils import create_cart
 
 User = get_user_model()
 
@@ -90,6 +89,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return RecipeListSerializer
+        return RecipeSerializer
 
     def del_obj(self, model, user, pk):
         favorite = get_object_or_404(model, user=user, recipe__id=pk)

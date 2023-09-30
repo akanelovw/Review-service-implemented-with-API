@@ -1,5 +1,6 @@
-from recipes.models import IngredientMeasure
 from django.db.models import Sum
+
+from recipes.models import IngredientMeasure
 
 
 def create_cart(user):
