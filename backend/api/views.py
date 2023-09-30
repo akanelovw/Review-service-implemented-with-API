@@ -15,8 +15,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from users.models import Follow
 from djoser.views import UserViewSet
+from .utils import create_cart
 
-from .enums import Enums, Urls
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import LimitPaginator
 from .serializers import (FavoriteSerializer, FollowSerializer,
@@ -91,56 +91,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
-    def get_queryset(self):
-        queryset = self.queryset
+    def del_obj(self, model, user, pk):
+        favorite = get_object_or_404(model, user=user, recipe__id=pk)
+        favorite.delete()
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
 
-        tags = self.request.query_params.getlist(Urls.TAGS.value)
-        if tags:
-            queryset = queryset.filter(tags__slug__in=tags).distinct()
-
-        author = self.request.query_params.get(Urls.AUTHOR.value)
-        if author:
-            queryset = queryset.filter(author=author)
-
-        if self.request.user.is_anonymous:
-            return queryset
-
-        is_in_cart = self.request.query_params.get(Urls.SHOPPING_CART)
-        if is_in_cart in Enums.TRUE_SEARCH.value:
-            queryset = queryset.filter(shopping_cart__user=self.request.user)
-        elif is_in_cart in Enums.FALSE_SEARCH.value:
-            queryset = queryset.exclude(shopping_cart__user=self.request.user)
-
-        is_favorite = self.request.query_params.get(Urls.FAVORITES)
-        if is_favorite in Enums.TRUE_SEARCH.value:
-            queryset = queryset.filter(favorites__user=self.request.user)
-        if is_favorite in Enums.FALSE_SEARCH.value:
-            queryset = queryset.exclude(favorites__user=self.request.user)
-
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
-    def unfavorite(self, model, user, pk):
-        favorite = model.objects.filter(user=user, recipe__id=pk)
-        if favorite.exists():
-            favorite.delete()
-            return Response(
-                status=status.HTTP_204_NO_CONTENT
-            )
-        return Response({
-            'errors': 'Рецепт не в избранном'
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-    def in_favorite(self, model, user, pk):
+    def add_obj(self, model, user, pk):
         if not Recipe.objects.filter(id=pk).exists():
             return Response({
                 'errors': 'Рецепта не существует'
             }, status=status.HTTP_400_BAD_REQUEST)
         if model.objects.filter(user=user, recipe__id=pk).exists():
             return Response({
-                'errors': 'Рецепт уже в избранном'
+                'errors': 'Рецепт уже добавлен'
             }, status=status.HTTP_400_BAD_REQUEST)
         recipe = get_object_or_404(
             Recipe,
@@ -164,9 +129,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk=None):
         if request.method == 'POST':
-            return self.in_favorite(Favorite, request.user, pk)
+            return self.add_obj(Favorite, request.user, pk)
         elif request.method == 'DELETE':
-            return self.unfavorite(Favorite, request.user, pk)
+            return self.del_obj(Favorite, request.user, pk)
         return None
 
     @action(
@@ -177,9 +142,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk=None):
         if request.method == 'POST':
-            return self.in_favorite(ShoppingCart, request.user, pk)
+            return self.add_obj(ShoppingCart, request.user, pk)
         elif request.method == 'DELETE':
-            return self.unfavorite(ShoppingCart, request.user, pk)
+            return self.del_obj(ShoppingCart, request.user, pk)
         return None
 
     @action(
@@ -190,34 +155,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request, **kwargs):
         user = request.user
         filename = f'{user.username}_shopping_list.txt'
-        ingredients = (
-            IngredientMeasure.objects
-            .filter(recipe__shopping_cart__user=request.user)
-            .values('ingredient')
-            .annotate(total_amount=Sum('amount'))
-            .values_list('ingredient__name', 'total_amount',
-                         'ingredient__measurement_unit')
-        )
-        file_list = []
-        [file_list.append(
-            '{} - {} {}.'.format(*ingredient)) for ingredient in ingredients]
+        cart = create_cart(user)
         file = HttpResponse(
-            'Cписок покупок:\n' + '\n'.join(file_list),
+            'Cписок покупок:\n' + '\n'.join(cart),
             content_type='text/plain'
         )
         file['Content-Disposition'] = (f'attachment; filename={filename}')
         return file
 
 
-class TagsViewSet(viewsets.ModelViewSet):
+class TagsViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
     pagination_class = None
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    http_method_names = ['get']
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
     pagination_class = None
     queryset = Ingredient.objects.all()
@@ -225,4 +179,3 @@ class IngredientViewSet(viewsets.ModelViewSet):
     filter_backends = (SearchFilter, DjangoFilterBackend)
     search_fields = ('^name',)
     filterset_class = IngredientFilter
-    http_method_names = ['get']

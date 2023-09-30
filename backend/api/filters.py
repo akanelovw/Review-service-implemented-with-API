@@ -1,9 +1,9 @@
-import django_filters as filters
+from django_filters.rest_framework import FilterSet, filters
 
 from recipes.models import Ingredient, Recipe
 
 
-class RecipeFilter(filters.FilterSet):
+class RecipeFilter(FilterSet):
     tags = filters.AllValuesMultipleFilter(
         field_name='tags__slug'
     )
@@ -18,18 +18,18 @@ class RecipeFilter(filters.FilterSet):
 
     def get_is_favorited(self, queryset, name, value):
         user = self.request.user
-        if value:
+        if value and user.is_authenticated:
             return queryset.filter(favorites__user=user)
         return queryset
 
     def get_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
-        if value:
+        if value and user.is_authenticated:
             return queryset.filter(shopping_cart__user=user)
         return queryset
 
 
-class IngredientFilter(filters.FilterSet):
+class IngredientFilter(FilterSet):
     name = filters.CharFilter(field_name="name", lookup_expr='icontains')
 
     class Meta:

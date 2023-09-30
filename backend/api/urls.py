@@ -6,8 +6,8 @@ from rest_framework.routers import DefaultRouter
 app_name = 'api'
 
 router = DefaultRouter()
-router.register('users', UsersViewSet)
-router.register('recipes', RecipeViewSet)
+router.register('users', UsersViewSet, basename='users')
+router.register('recipes', RecipeViewSet, basename='recipes')
 router.register('tags', TagsViewSet)
 router.register('ingredients', IngredientViewSet)
 
@@ -15,5 +15,4 @@ urlpatterns = [
     path('users/subscriptions/', SubscriptionsApiView.as_view()),
     path('', include(router.urls)),
     path('auth/', include('djoser.urls.authtoken')),
-    # path('users/<int:pk>/subscribe/', subscribe, name='subscribe'),
 ]
