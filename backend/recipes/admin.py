@@ -3,6 +3,7 @@ from django.contrib import admin
 from recipes.models import (Tag, Ingredient, IngredientMeasure,
                             Favorite, ShoppingCart, Recipe)
 
+
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit')

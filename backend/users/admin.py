@@ -1,7 +1,9 @@
 from django.contrib import admin
 from users.models import Follow, User
 
+
 admin.site.register(Follow)
+
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
