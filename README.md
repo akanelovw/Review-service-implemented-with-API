@@ -9,7 +9,12 @@
 Для этого необходимо в вашем репозитории настроить secret variables, которые приведены ниже.
 
 ```bash
-# дописать секреты
+DOCKER_PASSWORD - пароль от докера
+DOCKER_USERNAME - логин от докера
+HOST - ip удалённого сервера
+SSH_KEY - SSH ключ удалённого сервера
+SSH_PASSPHRASE - SSH пароль удалённого сервера
+USER - user удалённого сервера
 ```
 
 Подключаемся к серверу и устанавливаем Docker.
@@ -111,5 +116,7 @@ sudo docker-compose exec backend python manage.py load_data
 
 Пример проекта задеплоенного на сервер доступен по адресу:
 https://foodgramproject.zapto.org/recipes
+
+Для проверки админ зоны проекта был создан супер юзер, с данными которые предоставил ревьювер.
 
 ![Workflow Status](https://github.com/ripkrul/foodgram-project-react/actions/workflows/main.yml/badge.svg?branch=master&event=push)
