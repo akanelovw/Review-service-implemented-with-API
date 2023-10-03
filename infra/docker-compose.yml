@@ -9,7 +9,7 @@ services:
       - ./.env
 
   backend:
-      image: akanelovw/foodgram_backend:final_v2
+      image: akanelovw/foodgram_backend:final_ver2
       restart: always
       volumes:
         - static:/app/static/
