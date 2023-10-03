@@ -2,11 +2,12 @@ from django.core import validators
 from django.db import models
 
 from users.models import User
-
-CHAR_FIELD_MAX_LENGTH = 200
-RECIPE_TEXT_MAX_LENGTH = 1000
-COLOR_FIELD_MAX_LENGTH = 8
-MIN_VALUE = 1
+from .constants import (CHAR_FIELD_MAX_LENGTH,
+                        RECIPE_TEXT_MAX_LENGTH,
+                        HEX_COLOR_FIELD_MAX_LENGTH,
+                        COOKING_TIME_MIN_VALUE,
+                        INGREDIENT_AMOUNT_MIN_VALUE,
+                        DEFAULT_HEX_COLOR, HEX_COLOR_REGULAR_EXPRESSION)
 
 
 class Tag(models.Model):
@@ -18,12 +19,12 @@ class Tag(models.Model):
     )
     color = models.CharField(
         verbose_name='HEX цвет',
-        max_length=COLOR_FIELD_MAX_LENGTH,
+        max_length=HEX_COLOR_FIELD_MAX_LENGTH,
         unique=True,
-        default='#CD5C5C',
+        default=DEFAULT_HEX_COLOR,
         validators=[
             validators.RegexValidator(
-                '^#(?:[0-9a-fA-F]{3}){1,2}$',
+                HEX_COLOR_REGULAR_EXPRESSION,
                 'Неверный формат цвета'
             )
         ]
@@ -104,9 +105,9 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время готовки',
-        default=MIN_VALUE,
+        default=COOKING_TIME_MIN_VALUE,
         validators=[validators.MinValueValidator(
-            MIN_VALUE, 'Минимум одна минута')],
+            COOKING_TIME_MIN_VALUE, 'Минимум одна минута')],
     )
 
     class Meta:
@@ -136,7 +137,8 @@ class IngredientMeasure(models.Model):
         verbose_name='Количество',
         validators=(
             validators.MinValueValidator(
-                MIN_VALUE, message='Ингридиентов не может быть меньше одного'
+                INGREDIENT_AMOUNT_MIN_VALUE,
+                message='Ингридиентов не может быть меньше одного'
             ),
         )
     )

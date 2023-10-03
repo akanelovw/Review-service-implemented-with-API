@@ -16,10 +16,10 @@ from recipes.models import (Favorite, Ingredient, Recipe,
 from users.models import Follow
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import LimitPaginator
-from .serializers import (FavoriteSerializer, FollowSerializer,
+from .serializers import (RecipeShortSerializer, FollowSerializer,
                           IngredientSerializer, RecipeListSerializer,
                           RecipeSerializer, SubscribeSerializer, TagSerializer,
-                          UserSerializer)
+                          UserSerializer, ShoppingCartSerializer)
 from .utils import create_cart
 
 User = get_user_model()
@@ -49,22 +49,16 @@ class UsersViewSet(UserViewSet):
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            serializer = FollowSerializer(
-                author, context={'request': request}
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
             )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        if request.method == 'DELETE':
-            try:
-                subscription = Follow.objects.get(user=user, author=author)
-            except ObjectDoesNotExist:
-                content = {'errors': 'Вы не подписаны'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-            subscription.delete()
-            return HttpResponse(
-                'Успешная отписка',
-                status=status.HTTP_204_NO_CONTENT
-            )
+        subscription = get_object_or_404(Follow, user=user, author=author)
+        subscription.delete()
+        return HttpResponse(
+            'Успешная отписка',
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 
 class SubscriptionsApiView(generics.ListAPIView):
@@ -96,30 +90,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeSerializer
 
     def del_obj(self, model, user, pk):
-        favorite = get_object_or_404(model, user=user, recipe__id=pk)
-        favorite.delete()
+        obj = get_object_or_404(model, user=user, recipe__id=pk)
+        obj.delete()
         return Response(
             status=status.HTTP_204_NO_CONTENT
         )
 
-    def add_obj(self, model, user, pk):
-        if not Recipe.objects.filter(id=pk).exists():
-            return Response({
-                'errors': 'Рецепта не существует'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        if model.objects.filter(user=user, recipe__id=pk).exists():
-            return Response({
-                'errors': 'Рецепт уже добавлен'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        recipe = get_object_or_404(
-            Recipe,
-            id=pk
-        )
-        model.objects.create(
-            user=user,
-            recipe=recipe
-        )
-        serializer = FavoriteSerializer(recipe)
+    def add_obj(self, serializer_choice, user, pk):
+        data = {
+            'user': user.id,
+            'recipe': pk,
+        }
+        serializer = serializer_choice(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(
             serializer.data,
             status=status.HTTP_201_CREATED
@@ -133,10 +117,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk=None):
         if request.method == 'POST':
-            return self.add_obj(Favorite, request.user, pk)
-        elif request.method == 'DELETE':
-            return self.del_obj(Favorite, request.user, pk)
-        return None
+            return self.add_obj(RecipeShortSerializer, request.user, pk)
+        return self.del_obj(Favorite, request.user, pk)
 
     @action(
         detail=True,
@@ -146,10 +128,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk=None):
         if request.method == 'POST':
-            return self.add_obj(ShoppingCart, request.user, pk)
-        elif request.method == 'DELETE':
-            return self.del_obj(ShoppingCart, request.user, pk)
-        return None
+            return self.add_obj(ShoppingCartSerializer, request.user, pk)
+        return self.del_obj(ShoppingCart, request.user, pk)
 
     @action(
         detail=False,
