@@ -126,11 +126,13 @@ class IngredientMeasure(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
+        related_name='ingredient_amount',
         verbose_name='Ингридиент',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name='ingredient_amount',
         verbose_name='Рецепт',
     )
     amount = models.PositiveSmallIntegerField(

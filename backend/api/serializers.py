@@ -14,7 +14,7 @@ from users.models import Follow
 User = get_user_model()
 
 
-class AuthorRecipeSerializer(serializers.ModelSerializer):
+class ShortRecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
 
     class Meta:
@@ -32,6 +32,19 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
+
+
+class IngredientCreateSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all()
+    )
+    amount = serializers.IntegerField(
+        write_only=True,
+    )
+
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'amount')
 
 
 class IngredientMeasureSerializer(serializers.ModelSerializer):
@@ -87,6 +100,19 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
+class ShowRecipeSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True, read_only=True)
+    author = UserSerializer(read_only=True)
+    ingredients = IngredientMeasureSerializer(
+        source='ingredient_amount',
+        many=True
+    )
+
+    class Meta:
+        model = Recipe
+        fields = '__all__'
+
+
 class FollowSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
@@ -103,9 +129,9 @@ class FollowSerializer(UserSerializer):
             try:
                 limit_integer = int(limit)
                 queryset = queryset[:limit_integer]
-                return AuthorRecipeSerializer(queryset, many=True).data
             except TypeError as err:
                 raise serializers.ValidationError(f'Value must be int {err}')
+        return ShortRecipeSerializer(queryset, many=True).data
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
@@ -137,13 +163,11 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
-    tags = TagSerializer(read_only=True, many=True)
-    author = UserSerializer(read_only=True)
-    ingredients = IngredientMeasureSerializer(
-        source='ingredientmeasure_set',
-        many=True,
-        read_only=True,
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True
     )
+    author = UserSerializer(read_only=True)
+    ingredients = IngredientCreateSerializer(many=True)
     cooking_time = serializers.IntegerField(
         validators=(
             validators.MinValueValidator(
@@ -171,7 +195,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         if not tags_arr:
             raise serializers.ValidationError('Не указаны тэги')
         if len(tags_arr) != len(set(tags_arr)):
-            raise serializers.ValidationError("Теги повторяются")
+            raise serializers.ValidationError('Теги повторяются')
         ingredients = self.initial_data.get('ingredients')
         if not ingredients:
             raise serializers.ValidationError({
@@ -193,9 +217,6 @@ class RecipeSerializer(serializers.ModelSerializer):
                         'Масса ингридиента не может быть меньше нуля'
                     )
                 })
-        data['ingredients'] = ingredients
-        data['tags'] = tags_arr
-        data['author'] = self.context.get('request').user
         return data
 
     def create_ingredients(self, ingredients, recipe):
@@ -204,7 +225,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             ingredients_array.append(
                 IngredientMeasure(
                     recipe=recipe,
-                    ingredient=Ingredient.objects.get(pk=ingredient['id']),
+                    ingredient=ingredient['id'],
                     amount=ingredient['amount']
                 )
             )
@@ -228,6 +249,12 @@ class RecipeSerializer(serializers.ModelSerializer):
         self.create_ingredients(ingredients, instance)
         instance.save()
         return instance
+
+    def to_representation(self, instance):
+        return ShowRecipeSerializer(
+            instance,
+            context={'request': self.context.get('request')},
+        ).data
 
 
 class RecipeListSerializer(RecipeSerializer):
@@ -272,27 +299,39 @@ class RecipeListSerializer(RecipeSerializer):
         )
 
 
-class RecipeShortSerializer(serializers.ModelSerializer):
-    recipe = serializers.PrimaryKeyRelatedField(
-        queryset=Recipe.objects.all()
-    )
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all()
-    )
+class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
-        fields = ('recipe', 'user')
+        fields = '__all__'
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=model.objects.all(),
+                fields=('recipe', 'user'),
+            )
+        ]
+
+    def to_representation(self, instance):
+        return ShortRecipeSerializer(
+            instance.recipe,
+            context={'request': self.context.get('request')}
+        ).data
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
-    recipe = serializers.PrimaryKeyRelatedField(
-        queryset=Recipe.objects.all()
-    )
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all()
-    )
 
     class Meta:
         model = ShoppingCart
-        fields = ('recipe', 'user')
+        fields = '__all__'
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=model.objects.all(),
+                fields=('recipe', 'user'),
+            )
+        ]
+
+    def to_representation(self, instance):
+        return ShortRecipeSerializer(
+            instance.recipe,
+            context={'request': self.context.get('request')}
+        ).data

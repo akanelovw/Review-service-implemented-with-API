@@ -15,7 +15,7 @@ from recipes.models import (Favorite, Ingredient, Recipe,
 from users.models import Follow
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import LimitPaginator
-from .serializers import (RecipeShortSerializer, FollowSerializer,
+from .serializers import (FavoriteSerializer, FollowSerializer,
                           IngredientSerializer, RecipeListSerializer,
                           RecipeSerializer, SubscribeSerializer, TagSerializer,
                           UserSerializer, ShoppingCartSerializer)
@@ -71,8 +71,7 @@ class SubscriptionsApiView(generics.ListAPIView):
         return context
 
     def get_queryset(self):
-        user = self.request.user
-        return User.objects.filter(following__user=user)
+        return User.objects.filter(following__user=self.request.user)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -87,6 +86,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ('list', 'retrieve'):
             return RecipeListSerializer
         return RecipeSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     def del_obj(self, model, user, pk):
         obj = get_object_or_404(model, user=user, recipe__id=pk)
@@ -116,7 +118,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk=None):
         if request.method == 'POST':
-            return self.add_obj(RecipeShortSerializer, request.user, pk)
+            return self.add_obj(FavoriteSerializer, request.user, pk)
         return self.del_obj(Favorite, request.user, pk)
 
     @action(
