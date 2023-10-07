@@ -142,7 +142,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         filename = f'{user.username}_shopping_list.txt'
         cart = create_cart(user)
         file = HttpResponse(
-            'Cписок покупок:\n' + '\n'.join(cart),
+            'Cписок покупок:\n' + cart,
             content_type='text/plain'
         )
         file['Content-Disposition'] = (f'attachment; filename={filename}')
