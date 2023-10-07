@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.5'
 services:
 
   db:
@@ -9,7 +9,7 @@ services:
       - ./.env
 
   backend:
-      image: akanelovw/foodgram_backend:review_build_final_ver12
+      image: akanelovw/foodgram_backend:final_review_ver1
       restart: always
       volumes:
         - static:/app/static/
