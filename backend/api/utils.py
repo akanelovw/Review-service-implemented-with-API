@@ -10,11 +10,11 @@ def create_cart(user):
     ingredients = ingredients.values(
         'ingredient__name', 'ingredient__measurement_unit'
     ).annotate(
-        ingredient_name=F('ingredient__name'),
+        ingredient=F('ingredient'),
         measure=F('ingredient__measurement_unit'),
         total_amount=Sum('amount')).order_by('-ingredient_name')
     file_list = '\n'.join([
-        f"{field['ingredient_name']} - {field['total_amount']} {field['measure']}"
+        f"{field['ingredient']} - {field['total_amount']} {field['measure']}"
         for field in ingredients
     ])
     return file_list
