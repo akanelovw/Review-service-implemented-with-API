@@ -107,10 +107,26 @@ class ShowRecipeSerializer(serializers.ModelSerializer):
         source='ingredient_amount',
         many=True
     )
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = '__all__'
+
+    def get_is_favorited(self, obj):
+        user = self.context['request'].user
+        return (
+            user.is_authenticated
+            and obj.favorites.filter(user_id=user.id).exists()
+        )
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context['request'].user
+        return (
+            user.is_authenticated
+            and obj.shopping_cart.filter(user_id=user.id).exists()
+        )
 
 
 class FollowSerializer(UserSerializer):
@@ -144,14 +160,6 @@ class SubscribeSerializer(serializers.ModelSerializer):
             'user',
             'author',
         ]
-
-    def validate_author(self, value):
-        request = self.context['request']
-        if request.user == value:
-            raise serializers.ValidationError(
-                ('Вы не можете подписаться на себя')
-            )
-        return value
 
     def validate_user(self, obj):
         user = self.context['request'].user
@@ -266,8 +274,8 @@ class RecipeListSerializer(RecipeSerializer):
         many=True,
         read_only=True,
     )
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.BooleanField()
+    is_in_shopping_cart = serializers.BooleanField()
 
     class Meta:
         model = Recipe
@@ -282,20 +290,6 @@ class RecipeListSerializer(RecipeSerializer):
             'image',
             'text',
             'cooking_time',
-        )
-
-    def get_is_favorited(self, obj):
-        user = self.context['request'].user
-        return (
-            user.is_authenticated
-            and obj.favorites.filter(user_id=user.id).exists()
-        )
-
-    def get_is_in_shopping_cart(self, obj):
-        user = self.context['request'].user
-        return (
-            user.is_authenticated
-            and obj.shopping_cart.filter(user_id=user.id).exists()
         )
 
 

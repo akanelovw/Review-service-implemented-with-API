@@ -4,6 +4,12 @@ from recipes.models import (Tag, Ingredient, IngredientMeasure,
                             Favorite, ShoppingCart, Recipe)
 
 
+class Ingredients(admin.TabularInline):
+    model = IngredientMeasure
+    min_num = 1
+    extra = 1
+
+
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit')
@@ -29,6 +35,7 @@ class RecipeAdmin(admin.ModelAdmin):
     readonly_fields = ('in_favorites',)
     search_fields = ('name', 'author')
     list_filter = ('tags',)
+    inlines = (Ingredients,)
 
     @admin.display(description='Тэги')
     def tags(self, obj):
