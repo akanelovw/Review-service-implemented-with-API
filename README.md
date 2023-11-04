@@ -115,10 +115,4 @@ sudo docker-compose exec backend python manage.py load_data
 
 Настройка и деплой выполнены, сайт готов к работе.
 
-
-Пример проекта задеплоенного на сервер доступен по адресу:
-https://foodgramproject.zapto.org/recipes
-
-Для проверки админ зоны проекта был создан супер юзер, с данными которые предоставил ревьювер.
-
 ![Workflow Status](https://github.com/ripkrul/foodgram-project-react/actions/workflows/main.yml/badge.svg?branch=master&event=push)
